@@ -223,25 +223,25 @@ export default class Server {
         ##### BTC Price #####
       */
       price = await this.getCryptoPrice(`${this.baseCryptoUrl}/${config.cryptos[0]}`);
-      channel = this.getDiscordChannel(channels, config.cryptos[0], config.categories[0])[0];
+      channel = this.getDiscordChannel(channels, config.cryptos[0], config.categories[0]);
       await channel.send(this.getCurrentPriceMessage(price)).catch((error: any) => log(error));
       /*
         ##### DOGE Price #####
       */
       price = await this.getCryptoPrice(`${this.baseCryptoUrl}/${config.cryptos[1]}`);
-      channel = this.getDiscordChannel(channels, config.cryptos[1], config.categories[0])[0];
+      channel = this.getDiscordChannel(channels, config.cryptos[1], config.categories[0]);
       await channel.send(this.getCurrentPriceMessage(price)).catch((error: any) => log(error));
       /*
         ##### ETH Price #####
       */
       price = await this.getCryptoPrice(`${this.baseCryptoUrl}/${config.cryptos[2]}`);
-      channel = this.getDiscordChannel(channels, config.cryptos[2], config.categories[0])[0];
+      channel = this.getDiscordChannel(channels, config.cryptos[2], config.categories[0]);
       await channel.send(this.getCurrentPriceMessage(price)).catch((error: any) => log(error));
       /*
         ##### XMR Price #####
       */
       price = await this.getCryptoPrice(`${this.baseCryptoUrl}/${config.cryptos[3]}`);
-      channel = this.getDiscordChannel(channels, config.cryptos[3], config.categories[0])[0];
+      channel = this.getDiscordChannel(channels, config.cryptos[3], config.categories[0]);
       await channel.send(this.getCurrentPriceMessage(price)).catch((error: any) => log(error));
     }
   }
