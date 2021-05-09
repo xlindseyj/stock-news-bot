@@ -51,10 +51,6 @@ export default class Server {
     return channels.filter((channel: TextChannel) => channel.name === ticker && channel.parent.name === channelCategory)[0];
   }
 
-  public getOpenPrice = async (ticker: string): Promise<void> => {}
-  public getClosePrice = async (ticker: string): Promise<void> => {}
-  public getLatestNews = async (ticker: string): Promise<void> => {}
-
   public getCurrentPriceMessage = (price: string): string => {
     return `[${new Date().toLocaleTimeString()}]: The current price is ${price}`;
   }
