@@ -10,7 +10,7 @@
     "start:dev": "nodemon --inspect",
     "tslint": "tslint --project tsconfig.json --config tslint.json",
     "tslint-fix": "tslint --project tsconfig.json --config tslint.json --fix",
-    "version": "auto-changelog -p --prepend --hide-credit && git add CHANGELOG.md && npm run increment"
+    "version": "auto-changelog -p --hide-credit && git add CHANGELOG.md && npm run increment"
   },
   "keywords": [
     "stock",
