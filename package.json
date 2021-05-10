@@ -8,7 +8,8 @@
     "start": "ts-node ./bin/app",
     "start:dev": "nodemon --inspect",
     "tslint": "tslint --project tsconfig.json --config tslint.json",
-    "tslint-fix": "tslint --project tsconfig.json --config tslint.json --fix"
+    "tslint-fix": "tslint --project tsconfig.json --config tslint.json --fix",
+    "version": "auto-changelog -p && git add CHANGELOG.md"
   },
   "keywords": [
     "stock",
