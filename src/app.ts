@@ -46,6 +46,14 @@ export default class Server {
     return channels.filter((channel: TextChannel) => channel.name === ticker && channel.parent.name === channelCategory)[0];
   }
 
+  public getDiscordChannels = async (): Promise<Channel[]> => {
+    const channels = [ ...this.discordClient.channels.cache.entries() ]
+      .filter(([id, channel]: [string, any]) => channel.type === 'text')
+      .map((channel: any) => channel[1]
+    );
+    return channels;
+  }
+
   public getCurrentPriceMessage = (price: string): string => {
     return `[${new Date().toLocaleTimeString()}]: The current price is ${price}`;
   }
@@ -143,7 +151,9 @@ export default class Server {
       this.utilityService.log('Discord server is live', true);
       this.utilityService.log('Connecting to Google Finance...');
       this.utilityService.log('Connecting to Coin Desk...', true);
+      await this.refreshNews();
       await this.refreshPrices();
+      setInterval(this.refreshNews, 1000 * 60 * 1); // every 1 minute(s)
       setInterval(this.refreshPrices, 1000 * 60 * 15); // every 15 minutes
     });
 
@@ -164,33 +174,12 @@ export default class Server {
     }
   }
 
-  public refreshPrices = async (): Promise<void> => {
-    // loop through array from config file for tickers
-    this.utilityService.log(`Refreshing news and prices`, true);
+  public refreshNews = async (): Promise<void> => {
+    this.utilityService.log(`Refreshing news`, true);
 
     let news: string[];
-    let price: string;
     let channel: TextChannel;
-
-    const channels: Channel[] = [ ...this.discordClient.channels.cache.entries() ]
-      .filter(([id, channel]: [string, any]) => channel.type === 'text')
-      .map((channel: any) => channel[1]
-    );
-
-    if (this.isStocksAllowed) {
-      /*
-        ##### GME Price #####
-      */
-      price = await this.getStockPrice(`${this.baseStockUrl}/quote/${config.stocks[0]}:NYSE`);
-      channel = this.getDiscordChannel(channels, config.stocks[0], config.categories[3]);
-      await channel.send(this.getCurrentPriceMessage(price)).catch((error: any) => this.utilityService.log(error));
-      /*
-        ##### MNMD Price #####
-      */
-      price = await this.getStockPrice(`${this.baseStockUrl}/quote/${config.stocks[1]}:NASDAQ`);
-      channel = this.getDiscordChannel(channels, config.stocks[1], config.categories[3]);
-      await channel.send(this.getCurrentPriceMessage(price)).catch((error: any) => this.utilityService.log(error));
-    }
+    const channels: Channel[] = await this.getDiscordChannels();
 
     if (this.isNewsAllowed) {
       /*
@@ -211,6 +200,29 @@ export default class Server {
       channel = this.getDiscordChannel(channels, config.stocks[1], config.categories[2]);
       news = await this.getStockNews(`${this.baseStockUrl}/quote/${config.stocks[1]}:NASDAQ`, channel);
       await this.postNews(news, channel);
+    }
+  }
+
+  public refreshPrices = async (): Promise<void> => {
+    this.utilityService.log(`Refreshing prices`, true);
+
+    let price: string;
+    let channel: TextChannel;
+    const channels: Channel[] = await this.getDiscordChannels();
+
+    if (this.isStocksAllowed) {
+      /*
+        ##### GME Price #####
+      */
+      price = await this.getStockPrice(`${this.baseStockUrl}/quote/${config.stocks[0]}:NYSE`);
+      channel = this.getDiscordChannel(channels, config.stocks[0], config.categories[3]);
+      await channel.send(this.getCurrentPriceMessage(price)).catch((error: any) => this.utilityService.log(error));
+      /*
+        ##### MNMD Price #####
+      */
+      price = await this.getStockPrice(`${this.baseStockUrl}/quote/${config.stocks[1]}:NASDAQ`);
+      channel = this.getDiscordChannel(channels, config.stocks[1], config.categories[3]);
+      await channel.send(this.getCurrentPriceMessage(price)).catch((error: any) => this.utilityService.log(error));
     }
 
     if (this.isCryptoAllowed) {
