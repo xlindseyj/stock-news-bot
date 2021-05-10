@@ -92,6 +92,10 @@ export default class Server {
 
     news = filter(cryptoNews, (link: string) => !newsAlreadyInChatroom.includes(link));
 
+    if (news.length > 0) {
+      this.utilityService.log(`Found ${news.length} new Crypto News`)
+    }
+
     return news;
   }
 
@@ -135,6 +139,10 @@ export default class Server {
 
     news = filter(topStories, (link: string) => !newsAlreadyInChatroom.includes(link));
 
+    if (news.length > 0) {
+      this.utilityService.log(`Found ${news.length} new Top Stories`)
+    }
+
     return news;
   }
 
@@ -162,6 +170,10 @@ export default class Server {
     });
 
     news = filter(stockNews, (link: string) => !newsAlreadyInChatroom.includes(link));
+
+    if (news.length > 0) {
+      this.utilityService.log(`Found ${news.length} new Stock News`)
+    }
 
     return news;
   }
@@ -212,7 +224,7 @@ export default class Server {
   }
 
   public refreshNews = async (): Promise<void> => {
-    this.utilityService.log(`Refreshing news`, true);
+    this.utilityService.log(`Refreshing news`);
 
     let news: string[];
     let channel: TextChannel;
@@ -250,7 +262,7 @@ export default class Server {
   }
 
   public refreshPrices = async (): Promise<void> => {
-    this.utilityService.log(`Refreshing prices`, true);
+    this.utilityService.log(`Refreshing prices`);
 
     let price: string;
     let channel: TextChannel;
