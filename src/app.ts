@@ -191,7 +191,7 @@ export default class Server {
     news = filter(stockNews, (link: string) => !newsAlreadyInChatroom.includes(link));
 
     if (news.length > 0) {
-      this.utilityService.log(`Found ${news.length} new Stock News`)
+      this.utilityService.log(`Found ${news.length} new Stock News for $${channel.toString().toUpperCase()}`)
     }
 
     return news;
