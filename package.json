@@ -5,11 +5,12 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
+    "increment": "npm version patch",
     "start": "ts-node ./bin/app",
     "start:dev": "nodemon --inspect",
     "tslint": "tslint --project tsconfig.json --config tslint.json",
     "tslint-fix": "tslint --project tsconfig.json --config tslint.json --fix",
-    "version": "auto-changelog -p --prepend --hide-credit && git add CHANGELOG.md"
+    "version": "auto-changelog -p --prepend --hide-credit && git add CHANGELOG.md && npm run increment"
   },
   "keywords": [
     "stock",
@@ -26,13 +27,15 @@
     "cheerio": "^1.0.0-rc.5",
     "discord.js": "^12.5.1",
     "dotenv": "^8.2.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "semver": "^7.3.5"
   },
   "devDependencies": {
     "@types/cheerio": "^0.22.28",
     "@types/dotenv": "^8.2.0",
     "@types/lodash": "^4.14.168",
     "@types/node": "^14.14.31",
+    "@types/semver": "^7.3.5",
     "auto-changelog": "^2.2.1",
     "nodemon": "^2.0.7",
     "prettier": "^2.2.1",

@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import axios from 'axios';
 import cheerio from 'cheerio';
+import semver from 'semver';
 import { Channel, Client, Message, TextChannel } from 'discord.js';
 // import { CommandHandler } from './discord/commands';
 import { discordConfig } from './discord/config';
@@ -50,6 +51,24 @@ export default class Server {
 
   constructor(private dateService: DateService, private utilityService: UtilityService) {}
 
+  private getChangelogVersion = async (changelog: string): Promise<string> => {
+    let version = changelog.split('## ');
+    version = version[1].split('\n');
+    return version[0];
+  }
+
+  private getCurrentChangelogVersion = async (channel: TextChannel): Promise<string> => {
+    const messages: string[] = await channel.messages.fetch({
+      limit: 100
+    }).then(messages => {
+      return [ ...messages ].map(([text, message]) => message.content);
+    });
+    const messagesLength: number = messages.length;
+    const index: number = messagesLength - 1;
+    const versionAlreadyInChatroom = messages[index].split('## ')[1];
+    return messages.length > 0 ? versionAlreadyInChatroom : '0.0.0';
+  }
+
   public getDiscordChannel = (channels: any[], channelName: string, channelCategory: string): TextChannel => {
     const channel: TextChannel = channels.filter((channel: TextChannel) => channel.name === channelName && channel.parent.name.toLowerCase() === channelCategory)[0];
     return channel;
@@ -71,7 +90,7 @@ export default class Server {
     let response: any = await axios(`${this.baseCryptoUrl}/news`)
       .catch((error) => this.utilityService.log(error));
 
-    if (response.status !== 200){
+    if (response.status !== 200) {
       throw Error('Error occurred while fetching Crypto News');
     }
 
@@ -103,7 +122,7 @@ export default class Server {
     let response: any = await axios(url)
       .catch((error) => this.utilityService.log(error));
 
-    if (response.status !== 200){
+    if (response.status !== 200) {
       throw Error('Error occurred while fetching Crypto Prices');
     }
   
@@ -118,7 +137,7 @@ export default class Server {
     let response: any = await axios(url)
       .catch((error) => this.utilityService.log(error));
 
-    if (response.status !== 200){
+    if (response.status !== 200) {
       throw Error('Error occurred while fetching Top Stories');
     }
 
@@ -150,7 +169,7 @@ export default class Server {
     let response: any = await axios(url)
       .catch((error) => this.utilityService.log(error));
 
-    if (response.status !== 200){
+    if (response.status !== 200) {
       throw Error('Error occurred while fetching Stock News');
     }
 
@@ -182,7 +201,7 @@ export default class Server {
     let response: any = await axios(url)
       .catch((error) => this.utilityService.log(error));
 
-    if (response.status !== 200){
+    if (response.status !== 200) {
       throw Error('Error occurred while fetching Stock Prices');
     }
   
@@ -198,11 +217,16 @@ export default class Server {
 
     this.discordClient.once('ready', async () => {
       this.utilityService.log('Discord server is live', true);
+      this.utilityService.log('Updating changelog...');
+
+      await this.updateChangelog();
+
       this.utilityService.log('Connecting to Google Finance...');
       this.utilityService.log('Connecting to Coin Desk...', true);
+      
       await this.refreshNews();
       await this.refreshPrices();
-      setInterval(this.refreshNews, 1000 * 60 * 1); // every 1 minute(s)
+      setInterval(this.refreshNews, 1000 * 60 * 1); // every 1 minute
       setInterval(this.refreshPrices, 1000 * 60 * 15); // every 15 minutes
     });
 
@@ -217,9 +241,14 @@ export default class Server {
     this.discordClient.login(discordConfig.token);
   }
 
+  public postChangelogUpdates = async (changelog: string, channel: TextChannel): Promise<void> => {
+    this.utilityService.log(`Changelog has been updated successfully`);
+    await channel.send(changelog).catch((error: any) => this.utilityService.log(error));
+  }
+
   public postNews = async (news: string[], channel: TextChannel): Promise<void> => {
     if (news.length > 0) {
-      forEach(news, (newsLink: string) => channel.send(newsLink).catch((error: any) => this.utilityService.log(error)));
+      forEach(news, async (newsLink: string) => await channel.send(newsLink).catch((error: any) => this.utilityService.log(error)));
     }
   }
 
@@ -321,6 +350,32 @@ export default class Server {
   public stop = (): void => {
     const endTime: string = new Date().toUTCString();
     this.utilityService.log(`Stock news ran from ${this.startTime} - ${endTime}`);
+  }
+
+  private updateChangelog = async (): Promise<void> => {
+    let url: string = 'https://raw.githubusercontent.com/xlindseyj/stock-news-bot/master/CHANGELOG.md';
+    let response: any = await axios(url)
+      .catch((error) => this.utilityService.log(error));
+
+    if (response.status !== 200) {
+      throw Error('Error occurred while fetching CHANGELOG.md');
+    }
+
+    const html = response.data;
+    const $ = cheerio.load(html);
+    const changelog: string = html;
+
+    const channels: Channel[] = await this.getDiscordChannels();
+    const channel = this.getDiscordChannel(channels, 'changelog', 'general');
+
+    const version: string = await this.getChangelogVersion(changelog);
+    const currentVersionInChatroom: string = await this.getCurrentChangelogVersion(channel);
+
+    if (semver.lt(currentVersionInChatroom, version)) {
+      await this.postChangelogUpdates(changelog, channel);
+    } else {
+      this.utilityService.log(`Changelog is already updated to the latest version: ${version}`, true);
+    }
   }
 
   public validateSetup = async (): Promise<void> => {
