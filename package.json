@@ -1,7 +1,7 @@
 {
   "name": "stock-news-bot",
   "version": "1.0.0",
-  "description": "Stock news based Discord bot",
+  "description": "Crypto and stock news based Discord bot",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
@@ -9,7 +9,7 @@
     "start:dev": "nodemon --inspect",
     "tslint": "tslint --project tsconfig.json --config tslint.json",
     "tslint-fix": "tslint --project tsconfig.json --config tslint.json --fix",
-    "version": "auto-changelog -p && git add CHANGELOG.md"
+    "version": "auto-changelog -p --prepend --hide-credit && git add CHANGELOG.md"
   },
   "keywords": [
     "stock",
