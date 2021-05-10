@@ -1,7 +1,8 @@
 export const config = {
-    categories: ['Crypto Prices', 'Crypto News', 'Stock News', 'Stock Prices', 'General'],
+    categories: ['General', 'News', 'Prices'],
     cryptos: ['btc', 'doge', 'eth', 'xmr'],
-    stocks: ['gme', 'mnmd', 'top-stories'],
+    news: ['top-stories', 'crypto-news', 'stock-news'],
+    stocks: ['gme', 'mnmd'],
     isCryptoAllowed: true,
     isNewsAllowed: true,
     isStocksAllowed: true
