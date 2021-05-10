@@ -147,7 +147,9 @@ export default class Server {
       setInterval(this.refreshPrices, 1000 * 60 * 15); // every 15 minutes
     });
 
-    this.discordClient.on('message', async (message: Message) => {});
+    this.discordClient.on('message', async (message: Message) => {
+      // commands here
+    });
 
     this.discordClient.on('error', (error) => {
       this.utilityService.log(`Discord server encountered an error: ${error}`, true);
