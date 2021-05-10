@@ -5,8 +5,6 @@ dotenv.config();
 interface DiscordConfig {
   token: string;
   prefix: string;
-  botOwnerRoleName?: string;
-  enableReactions?: boolean;
 };
 
 export const discordConfig: DiscordConfig = {
