@@ -61,9 +61,9 @@ export default class Server {
     this.utilityService = new UtilityService();
   }
 
-  public getCryptoNews = async (channel: TextChannel): Promise<any> => {
+  public getCryptoNews = async (channel: TextChannel): Promise<string[]> => {
     let response: any = await axios(`${this.baseCryptoUrl}/news`)
-      .catch((error) => this.utilityService.log(error));
+      .catch((error: any) => this.utilityService.log(error));
 
     if (response.status !== 200) {
       throw Error('Error occurred while fetching Crypto News');
@@ -95,7 +95,7 @@ export default class Server {
 
   public getCryptoPrice = async (url: string): Promise<string> => {
     let response: any = await axios(url)
-      .catch((error) => this.utilityService.log(error));
+      .catch((error: any) => this.utilityService.log(error));
 
     if (response.status !== 200) {
       throw Error('Error occurred while fetching Crypto Prices');
@@ -110,7 +110,7 @@ export default class Server {
 
   public getTopStories = async (url: string, channel: TextChannel): Promise<any> => {
     let response: any = await axios(url)
-      .catch((error) => this.utilityService.log(error));
+      .catch((error: any) => this.utilityService.log(error));
 
     if (response.status !== 200) {
       throw Error('Error occurred while fetching Top Stories');
@@ -142,7 +142,7 @@ export default class Server {
 
   public getStockNews = async (url: string, channel: TextChannel): Promise<any> => {
     let response: any = await axios(url)
-      .catch((error) => this.utilityService.log(error));
+      .catch((error: any) => this.utilityService.log(error));
 
     if (response.status !== 200) {
       throw Error('Error occurred while fetching Stock News');
@@ -174,7 +174,7 @@ export default class Server {
 
   public getStockPrice = async (url: string): Promise<string> => {
     let response: any = await axios(url)
-      .catch((error) => this.utilityService.log(error));
+      .catch((error: any) => this.utilityService.log(error));
 
     if (response.status !== 200) {
       throw Error('Error occurred while fetching Stock Prices');
@@ -200,8 +200,10 @@ export default class Server {
       this.utilityService.log('Connecting to Coin Desk...', true);
       
       await this.refreshNews();
+      await this.refreshPosts();
       await this.refreshPrices();
       setInterval(this.refreshNews, 1000 * 60 * 1); // every 1 minute
+      setInterval(this.refreshPosts, 1000 * 60 * 5); // every 5 minutes
       setInterval(this.refreshPrices, 1000 * 60 * 15); // every 15 minutes
     });
 
@@ -229,7 +231,7 @@ export default class Server {
       */
       channel = this.discordService.getDiscordChannel(channels, 'top-stories', 'news');
       news = await this.getTopStories(this.baseStockUrl, channel);
-      await this.discordService.postNews(news, channel);
+      await this.discordService.post(news, channel);
 
       if (this.isStockNewsAllowed) {
         /*
@@ -237,21 +239,42 @@ export default class Server {
         */
         channel = this.discordService.getDiscordChannel(channels, 'gme', 'news');
         news = await this.getStockNews(`${this.baseStockUrl}/quote/GME:NYSE`, channel);
-        await this.discordService.postNews(news, channel);
+        await this.discordService.post(news, channel);
         /*
           ##### MNMD News #####
         */
         channel = this.discordService.getDiscordChannel(channels, 'mnmd', 'news');
         news = await this.getStockNews(`${this.baseStockUrl}/quote/MNMD:NASDAQ`, channel);
-        await this.discordService.postNews(news, channel);
+        await this.discordService.post(news, channel);
       }
 
       if (this.isCryptoNewsAllowed) {
         channel = this.discordService.getDiscordChannel(channels, 'crypto-news', 'news');
         news = await this.getCryptoNews(channel);
-        await this.discordService.postNews(news, channel);
+        await this.discordService.post(news, channel);
       }
     }
+  }
+
+  public refreshPosts = async (): Promise<void> => {
+    this.utilityService.log(`Refreshing posts`);
+
+    let channel: TextChannel;
+    const channels: Channel[] = await this.discordService.getDiscordChannels(this.discordClient);
+    // if reddit posts allowed
+  
+    /*
+      ##### GME Reddit Posts #####
+    */
+    channel = this.discordService.getDiscordChannel(channels, 'gme', 'reddit');
+    const redditGMEPosts = await this.redditService.getGMERecentPosts(channel);
+    await this.discordService.post(redditGMEPosts, channel);
+    /*
+      ##### Wallstreet Bets Reddit Posts #####
+    */
+    channel = this.discordService.getDiscordChannel(channels, 'wallstreetbets', 'reddit');
+    const redditWSBPosts = await this.redditService.getWSBRecentPosts(channel);
+    await this.discordService.post(redditWSBPosts, channel);
   }
 
   public refreshPrices = async (): Promise<void> => {
@@ -319,7 +342,7 @@ export default class Server {
   public updateChangelog = async (): Promise<void> => {
     let url: string = 'https://raw.githubusercontent.com/xlindseyj/stock-news-bot/master/CHANGELOG.md';
     let response: any = await axios(url)
-      .catch((error) => this.utilityService.log(error));
+      .catch((error: any) => this.utilityService.log(error));
 
     if (response.status !== 200) {
       throw Error('Error occurred while fetching CHANGELOG.md');
