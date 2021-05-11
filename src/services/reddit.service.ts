@@ -6,7 +6,8 @@ import { UtilityService } from './utility.service';
 
 export class RedditService {
 
-    public postsSelector: string = '#SHORTCUT_FOCUSABLE_DIV > div:nth-child(4) > div > div > div > div._3ozFtOe6WpJEMUtxDOIvtU > div._1vyLCp-v-tE5QvZovwrASa > div._1OVBBWLtHoSPfGCRaPzpTf._3nSp9cdBpqL13CqjdMr2L_ > div.rpBJOHq2PR60pnwJlUyP0';
+    public postSelector: string = '._2INHSNB8V5eaWp4P0rY_mE';
+    public postBoxSelector: string = '#SHORTCUT_FOCUSABLE_DIV > div:nth-child(4) > div > div > div > div._3ozFtOe6WpJEMUtxDOIvtU > div._1vyLCp-v-tE5QvZovwrASa > div._1OVBBWLtHoSPfGCRaPzpTf._3nSp9cdBpqL13CqjdMr2L_ > div.rpBJOHq2PR60pnwJlUyP0';
     public url: string = 'https://www.reddit.com';
     public utilityService: UtilityService;
 
@@ -19,15 +20,15 @@ export class RedditService {
             .catch((error: any) => this.utilityService.log(error));
 
         if (response.status !== 200) {
-            throw Error('Error occurred while fetching Top Stories');
+            throw Error('Error occurred while fetching Reddit Posts for r/GME/');
         }
 
         let posts: string[] = [];
         const html = response.data;
         const $ = cheerio.load(html);
 
-        const redditPosts = $(this.postsSelector)
-            .find('._2INHSNB8V5eaWp4P0rY_mE')
+        const redditPosts = $(this.postBoxSelector)
+            .find(this.postSelector)
             .toArray()
             .filter((link: cheerio.Element, i: number) => !!link[i].children[0].attribs.href)
             .map((links: any) => `${this.url}${links.children[0].attribs.href.substring(2, -1)}`);
@@ -52,15 +53,15 @@ export class RedditService {
             .catch((error: any) => this.utilityService.log(error));
 
         if (response.status !== 200) {
-            throw Error('Error occurred while fetching Top Stories');
+            throw Error('Error occurred while fetching Reddit Posts r/WALLSTREETBETS/');
         }
 
         let posts: string[] = [];
         const html = response.data;
         const $ = cheerio.load(html);
 
-        const redditPosts = $(this.postsSelector)
-            .find('._2INHSNB8V5eaWp4P0rY_mE')
+        const redditPosts = $(this.postBoxSelector)
+            .find(this.postSelector)
             .toArray()
             .filter((link: cheerio.Element, i: number) => !!link[i].children[0].attribs.href)
             .map((links: any) => `${this.url}${links.children[0].attribs.href.substring(2, -1)}`);
