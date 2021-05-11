@@ -1,6 +1,6 @@
 {
   "name": "stock-news-bot",
-  "version": "1.0.0",
+  "version": "1.0.1-0",
   "description": "Crypto and stock news based Discord bot",
   "main": "index.js",
   "scripts": {
