@@ -9,6 +9,8 @@ import { config } from './config';
 import { filter, forEach } from 'lodash';
 import { DateService } from './services/date.service';
 import { UtilityService } from './services/utility.service';
+import { RedditService } from './services/reddit.service';
+import { DiscordService } from './services/discord.service';
 
 dotenv.config();
 
@@ -16,10 +18,13 @@ export default class Server {
   public PORT: number = Number(process.env.PORT) || 5001;
   public discordClient: Client = new Client();
   public startTime: string;
+  public dateService: DateService;
+  public discordService: DiscordService;
+  public redditService: RedditService;
+  public utilityService: UtilityService;
   // public commandHandler = new CommandHandler(discordConfig.prefix);
   public baseCryptoUrl: string = 'https://www.coindesk.com';
   public baseStockUrl: string = 'https://www.google.com/finance';
-  public newsUpToDate = false;
 
   get isCryptoAllowed(): boolean {
     return config.isCryptoAllowed;
@@ -49,41 +54,11 @@ export default class Server {
     return this.dateService.getHour() > 9 && this.dateService.getHour() < 16;
   }
 
-  constructor(private dateService: DateService, private utilityService: UtilityService) {}
-
-  private getChangelogVersion = async (changelog: string): Promise<string> => {
-    let version = changelog.split('## ');
-    version = version[1].split('\n');
-    return version[0];
-  }
-
-  private getCurrentChangelogVersion = async (channel: TextChannel): Promise<string> => {
-    const messages: string[] = await channel.messages.fetch({
-      limit: 100
-    }).then(messages => {
-      return [ ...messages ].map(([text, message]) => message.content);
-    });
-    const messagesLength: number = messages.length;
-    const index: number = messagesLength - 1;
-    const versionAlreadyInChatroom = messages[index].split('## ')[1];
-    return messages.length > 0 ? versionAlreadyInChatroom : '0.0.0';
-  }
-
-  public getDiscordChannel = (channels: any[], channelName: string, channelCategory: string): TextChannel => {
-    const channel: TextChannel = channels.filter((channel: TextChannel) => channel.name === channelName && channel.parent.name.toLowerCase() === channelCategory)[0];
-    return channel;
-  }
-
-  public getDiscordChannels = async (): Promise<Channel[]> => {
-    const channels: TextChannel[] = [ ...this.discordClient.channels.cache.entries() ]
-      .filter(([id, channel]: [string, any]) => channel.type === 'text')
-      .map((channel: any) => channel[1]
-    );
-    return channels;
-  }
-
-  public getCurrentPriceMessage = (price: string): string => {
-    return `[${new Date().toLocaleTimeString()}]: The current price is ${price}`;
+  constructor() {
+    this.dateService = new DateService();
+    this.discordService = new DiscordService();
+    this.redditService = new RedditService();
+    this.utilityService = new UtilityService();
   }
 
   public getCryptoNews = async (channel: TextChannel): Promise<any> => {
@@ -191,7 +166,7 @@ export default class Server {
     news = filter(stockNews, (link: string) => !newsAlreadyInChatroom.includes(link));
 
     if (news.length > 0) {
-      this.utilityService.log(`Found ${news.length} new Stock News for $${channel.toString().toUpperCase()}`)
+      this.utilityService.log(`Found ${news.length} new Stock News for $${channel.name.toString().toUpperCase()}`)
     }
 
     return news;
@@ -241,51 +216,40 @@ export default class Server {
     this.discordClient.login(discordConfig.token);
   }
 
-  public postChangelogUpdates = async (changelog: string, channel: TextChannel): Promise<void> => {
-    this.utilityService.log(`Changelog has been updated successfully`);
-    await channel.send(changelog).catch((error: any) => this.utilityService.log(error));
-  }
-
-  public postNews = async (news: string[], channel: TextChannel): Promise<void> => {
-    if (news.length > 0) {
-      forEach(news, async (newsLink: string) => await channel.send(newsLink).catch((error: any) => this.utilityService.log(error)));
-    }
-  }
-
   public refreshNews = async (): Promise<void> => {
     this.utilityService.log(`Refreshing news`);
 
     let news: string[];
     let channel: TextChannel;
-    const channels: Channel[] = await this.getDiscordChannels();
+    const channels: Channel[] = await this.discordService.getDiscordChannels(this.discordClient);
 
     if (this.isNewsAllowed) {
       /*
         ##### Top Stories #####
       */
-      channel = this.getDiscordChannel(channels, 'top-stories', 'news');
+      channel = this.discordService.getDiscordChannel(channels, 'top-stories', 'news');
       news = await this.getTopStories(this.baseStockUrl, channel);
-      await this.postNews(news, channel);
+      await this.discordService.postNews(news, channel);
 
       if (this.isStockNewsAllowed) {
         /*
           ##### GME News #####
         */
-        channel = this.getDiscordChannel(channels, 'gme', 'news');
+        channel = this.discordService.getDiscordChannel(channels, 'gme', 'news');
         news = await this.getStockNews(`${this.baseStockUrl}/quote/GME:NYSE`, channel);
-        await this.postNews(news, channel);
+        await this.discordService.postNews(news, channel);
         /*
           ##### MNMD News #####
         */
-        channel = this.getDiscordChannel(channels, 'mnmd', 'news');
+        channel = this.discordService.getDiscordChannel(channels, 'mnmd', 'news');
         news = await this.getStockNews(`${this.baseStockUrl}/quote/MNMD:NASDAQ`, channel);
-        await this.postNews(news, channel);
+        await this.discordService.postNews(news, channel);
       }
 
       if (this.isCryptoNewsAllowed) {
-        channel = this.getDiscordChannel(channels, 'crypto-news', 'news');
+        channel = this.discordService.getDiscordChannel(channels, 'crypto-news', 'news');
         news = await this.getCryptoNews(channel);
-        await this.postNews(news, channel);
+        await this.discordService.postNews(news, channel);
       }
     }
   }
@@ -295,21 +259,21 @@ export default class Server {
 
     let price: string;
     let channel: TextChannel;
-    const channels: Channel[] = await this.getDiscordChannels();
+    const channels: Channel[] = await this.discordService.getDiscordChannels(this.discordClient);
 
     if (this.isStocksAllowed) {
       /*
         ##### GME Price #####
       */
       price = await this.getStockPrice(`${this.baseStockUrl}/quote/GME:NYSE`);
-      channel = this.getDiscordChannel(channels, 'gme', 'prices');
-      await channel.send(this.getCurrentPriceMessage(price)).catch((error: any) => this.utilityService.log(error));
+      channel = this.discordService.getDiscordChannel(channels, 'gme', 'prices');
+      await channel.send(this.utilityService.getCurrentPriceMessage(price)).catch((error: any) => this.utilityService.log(error));
       /*
         ##### MNMD Price #####
       */
       price = await this.getStockPrice(`${this.baseStockUrl}/quote/MNMD:NASDAQ`);
-      channel = this.getDiscordChannel(channels, 'mnmd', 'prices');
-      await channel.send(this.getCurrentPriceMessage(price)).catch((error: any) => this.utilityService.log(error));
+      channel = this.discordService.getDiscordChannel(channels, 'mnmd', 'prices');
+      await channel.send(this.utilityService.getCurrentPriceMessage(price)).catch((error: any) => this.utilityService.log(error));
     }
 
     if (this.isCryptoAllowed) {
@@ -317,26 +281,26 @@ export default class Server {
         ##### BTC Price #####
       */
       price = await this.getCryptoPrice(`${this.baseCryptoUrl}/price/btc`);
-      channel = this.getDiscordChannel(channels, 'btc', 'prices');
-      await channel.send(this.getCurrentPriceMessage(price)).catch((error: any) => this.utilityService.log(error));
+      channel = this.discordService.getDiscordChannel(channels, 'btc', 'prices');
+      await channel.send(this.utilityService.getCurrentPriceMessage(price)).catch((error: any) => this.utilityService.log(error));
       /*
         ##### DOGE Price #####
       */
       price = await this.getCryptoPrice(`${this.baseCryptoUrl}/price/doge`);
-      channel = this.getDiscordChannel(channels, 'doge', 'prices');
-      await channel.send(this.getCurrentPriceMessage(price)).catch((error: any) => this.utilityService.log(error));
+      channel = this.discordService.getDiscordChannel(channels, 'doge', 'prices');
+      await channel.send(this.utilityService.getCurrentPriceMessage(price)).catch((error: any) => this.utilityService.log(error));
       /*
         ##### ETH Price #####
       */
       price = await this.getCryptoPrice(`${this.baseCryptoUrl}/price/eth`);
-      channel = this.getDiscordChannel(channels, 'eth', 'prices');
-      await channel.send(this.getCurrentPriceMessage(price)).catch((error: any) => this.utilityService.log(error));
+      channel = this.discordService.getDiscordChannel(channels, 'eth', 'prices');
+      await channel.send(this.utilityService.getCurrentPriceMessage(price)).catch((error: any) => this.utilityService.log(error));
       /*
         ##### XMR Price #####
       */
       price = await this.getCryptoPrice(`${this.baseCryptoUrl}/price/xmr`);
-      channel = this.getDiscordChannel(channels, 'xmr', 'prices');
-      await channel.send(this.getCurrentPriceMessage(price)).catch((error: any) => this.utilityService.log(error));
+      channel = this.discordService.getDiscordChannel(channels, 'xmr', 'prices');
+      await channel.send(this.utilityService.getCurrentPriceMessage(price)).catch((error: any) => this.utilityService.log(error));
     }
   }
 
@@ -352,7 +316,7 @@ export default class Server {
     this.utilityService.log(`Stock news ran from ${this.startTime} - ${endTime}`);
   }
 
-  private updateChangelog = async (): Promise<void> => {
+  public updateChangelog = async (): Promise<void> => {
     let url: string = 'https://raw.githubusercontent.com/xlindseyj/stock-news-bot/master/CHANGELOG.md';
     let response: any = await axios(url)
       .catch((error) => this.utilityService.log(error));
@@ -365,14 +329,14 @@ export default class Server {
     const $ = cheerio.load(html);
     const changelog: string = html;
 
-    const channels: Channel[] = await this.getDiscordChannels();
-    const channel = this.getDiscordChannel(channels, 'changelog', 'general');
+    const channels: Channel[] = await this.discordService.getDiscordChannels(this.discordClient);
+    const channel = this.discordService.getDiscordChannel(channels, 'changelog', 'general');
 
-    const version: string = await this.getChangelogVersion(changelog);
-    const currentVersionInChatroom: string = await this.getCurrentChangelogVersion(channel);
+    const version: string = await this.utilityService.getChangelogVersion(changelog);
+    const currentVersionInChatroom: string = await this.utilityService.getCurrentChangelogVersion(channel);
 
     if (semver.lt(currentVersionInChatroom, version)) {
-      await this.postChangelogUpdates(changelog, channel);
+      await this.discordService.postChangelogUpdates(changelog, channel);
     } else {
       this.utilityService.log(`Changelog is already updated to the latest version: ${version}`, true);
     }
@@ -386,8 +350,6 @@ export default class Server {
   }
 }
 
-const dateService = new DateService();
-const utilityService = new UtilityService();
-const server = new Server(dateService, utilityService);
+const server = new Server();
 server.validateSetup();
-server.run().catch((error: Error) => utilityService.log(`${error}`, true));
+server.run().catch((error: Error) => new UtilityService().log(`${error}`, true));
