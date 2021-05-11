@@ -6,8 +6,8 @@ import { UtilityService } from './utility.service';
 
 export class RedditService {
 
-    public postSelector: string = '._2INHSNB8V5eaWp4P0rY_mE';
     public postBoxSelector: string = '#SHORTCUT_FOCUSABLE_DIV > div:nth-child(4) > div > div > div > div._3ozFtOe6WpJEMUtxDOIvtU > div._1vyLCp-v-tE5QvZovwrASa > div._1OVBBWLtHoSPfGCRaPzpTf._3nSp9cdBpqL13CqjdMr2L_ > div.rpBJOHq2PR60pnwJlUyP0';
+    public postSelector: string = '._2INHSNB8V5eaWp4P0rY_mE';
     public url: string = 'https://www.reddit.com';
     public utilityService: UtilityService;
 
@@ -31,7 +31,7 @@ export class RedditService {
             .find(this.postSelector)
             .toArray()
             .filter((link: cheerio.Element, i: number) => !!link[i].children[0].attribs.href)
-            .map((links: any) => `${this.url}${links.children[0].attribs.href.substring(2, -1)}`);
+            .map((links: any) => `${this.url}${links.children[0].attribs.href}`);
 
         const postsAlreadyInChatroom: string[] = await channel.messages.fetch({
             limit: 100
@@ -64,7 +64,7 @@ export class RedditService {
             .find(this.postSelector)
             .toArray()
             .filter((link: cheerio.Element, i: number) => !!link[i].children[0].attribs.href)
-            .map((links: any) => `${this.url}${links.children[0].attribs.href.substring(2, -1)}`);
+            .map((links: any) => `${this.url}${links.children[0].attribs.href}`);
 
         const postsAlreadyInChatroom: string[] = await channel.messages.fetch({
             limit: 100
