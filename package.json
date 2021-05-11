@@ -11,7 +11,7 @@
     "start:dev": "nodemon --inspect",
     "tslint": "tslint --project tsconfig.json --config tslint.json",
     "tslint-fix": "tslint --project tsconfig.json --config tslint.json --fix",
-    "version": "auto-changelog -p -u --hide-credit && git add CHANGELOG.md"
+    "version": "auto-changelog -p --hide-credit"
   },
   "keywords": [
     "stock",
