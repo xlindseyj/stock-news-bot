@@ -44,9 +44,9 @@ export class DiscordService {
         this.utilityService.log(`Changelog has been updated successfully`);
     }
 
-    public postNews = async (news: string[], channel: TextChannel): Promise<void> => {
-        if (news.length > 0) {
-          forEach(news, async (newsLink: string) => await channel.send(newsLink).catch((error: any) => this.utilityService.log(error)));
+    public post = async (posts: string[], channel: TextChannel): Promise<void> => {
+        if (posts.length > 0) {
+          forEach(posts, async (postLink: string) => await channel.send(postLink).catch((error: any) => this.utilityService.log(error)));
         }
     }
 }
