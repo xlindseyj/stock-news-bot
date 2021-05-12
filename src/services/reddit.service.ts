@@ -15,12 +15,14 @@ export class RedditService {
         this.utilityService = new UtilityService();
     }
 
-    public getGMERecentPosts = async (channel: TextChannel): Promise<string[]> => {
-        let response: any = await axios(`${this.url}/r/gme/new`)
+    public getRecentPosts = async (channel: TextChannel, subreddit: string): Promise<string[]> => {
+        subreddit = subreddit.toUpperCase();
+
+        const response: any = await axios(`${this.url}/r/${subreddit}/new`, { timeout: 30000 })
             .catch((error: any) => this.utilityService.log(error));
 
         if (response.status !== 200) {
-            throw Error('Error occurred while fetching Reddit Posts for r/GME/');
+            throw Error(`Error occurred while fetching Reddit Posts for r/${subreddit}/`);
         }
 
         let posts: string[] = [];
@@ -30,8 +32,8 @@ export class RedditService {
         const redditPosts = $(this.postBoxSelector)
             .find(this.postSelector)
             .toArray()
-            .filter((link: cheerio.Element, i: number) => !!link[i].children[0].attribs.href)
-            .map((links: any) => `${this.url}${links.children[0].attribs.href}`);
+            .map((links: any) => links.children[0].attribs.href ? `${this.url}${links.children[0].attribs.href}` : null)
+            .filter((links: any) => links !== null);
 
         const postsAlreadyInChatroom: string[] = await channel.messages.fetch({
             limit: 100
@@ -42,40 +44,7 @@ export class RedditService {
         posts = filter(redditPosts, (link: string) => !postsAlreadyInChatroom.includes(link));
 
         if (posts.length > 0) {
-            this.utilityService.log(`Found ${posts.length} new Reddit Posts for r/GME/`)
-        }
-
-        return posts;
-    }
-
-    public getWSBRecentPosts = async (channel: TextChannel): Promise<string[]> => {
-        let response: any = await axios(`${this.url}/r/wallstreetbets/new`)
-            .catch((error: any) => this.utilityService.log(error));
-
-        if (response.status !== 200) {
-            throw Error('Error occurred while fetching Reddit Posts r/WALLSTREETBETS/');
-        }
-
-        let posts: string[] = [];
-        const html = response.data;
-        const $ = cheerio.load(html);
-
-        const redditPosts = $(this.postBoxSelector)
-            .find(this.postSelector)
-            .toArray()
-            .filter((link: cheerio.Element, i: number) => !!link[i].children[0].attribs.href)
-            .map((links: any) => `${this.url}${links.children[0].attribs.href}`);
-
-        const postsAlreadyInChatroom: string[] = await channel.messages.fetch({
-            limit: 100
-        }).then(messages => {
-            return [ ...messages ].map(([text, message]) => message.content);
-        });
-
-        posts = filter(redditPosts, (link: string) => !postsAlreadyInChatroom.includes(link));
-
-        if (posts.length > 0) {
-            this.utilityService.log(`Found ${posts.length} new Reddit Posts for r/WALLSTREETBETS/`)
+            this.utilityService.log(`Found ${posts.length} new Reddit Posts for r/${subreddit}/`)
         }
 
         return posts;

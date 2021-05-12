@@ -267,13 +267,19 @@ export default class Server {
       ##### GME Reddit Posts #####
     */
     channel = this.discordService.getDiscordChannel(channels, 'gme', 'reddit');
-    const redditGMEPosts = await this.redditService.getGMERecentPosts(channel);
+    const redditGMEPosts = await this.redditService.getRecentPosts(channel, 'gme');
     await this.discordService.post(redditGMEPosts, channel);
+    /*
+      ##### MNMD Reddit Posts #####
+    */
+    channel = this.discordService.getDiscordChannel(channels, 'mnmd', 'reddit');
+    const redditMNMDPosts = await this.redditService.getRecentPosts(channel, 'mnmd');
+    await this.discordService.post(redditMNMDPosts, channel);
     /*
       ##### Wallstreet Bets Reddit Posts #####
     */
     channel = this.discordService.getDiscordChannel(channels, 'wallstreetbets', 'reddit');
-    const redditWSBPosts = await this.redditService.getWSBRecentPosts(channel);
+    const redditWSBPosts = await this.redditService.getRecentPosts(channel, 'wallstreetbets');
     await this.discordService.post(redditWSBPosts, channel);
   }
 
