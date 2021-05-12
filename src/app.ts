@@ -254,7 +254,6 @@ export default class Server {
         await this.discordService.post(news, channel);
       }
     }
-    this.utilityService.logSeperator();
   }
 
   public refreshPosts = async (): Promise<void> => {
@@ -288,8 +287,6 @@ export default class Server {
     channel = this.discordService.getDiscordChannel(channels, 'wallstreetbets', 'reddit');
     const redditWSBPosts = await this.redditService.getRecentPosts(channel, 'wallstreetbets');
     await this.discordService.post(redditWSBPosts, channel);
-
-    this.utilityService.logSeperator();
   }
 
   public refreshPrices = async (): Promise<void> => {
@@ -340,7 +337,6 @@ export default class Server {
       channel = this.discordService.getDiscordChannel(channels, 'xmr', 'prices');
       await channel.send(this.utilityService.getCurrentPriceMessage(price)).catch((error: any) => this.utilityService.log(error));
     }
-    this.utilityService.logSeperator();
   }
 
   public run = async (): Promise<void> => {
