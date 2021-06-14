@@ -6,7 +6,7 @@ import { Channel, Client, Message, TextChannel } from 'discord.js';
 // import { CommandHandler } from './discord/commands';
 import { discordConfig } from './discord/config';
 import { config } from './config';
-import { filter, forEach } from 'lodash';
+import { filter } from 'lodash';
 import { DateService } from './services/date.service';
 import { UtilityService } from './services/utility.service';
 import { RedditService } from './services/reddit.service';
